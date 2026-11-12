@@ -105,7 +105,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           period = 60
           metrics = [
             [{
-              expression = "AVG(SEARCH('{${local.metrics_namespace},exception,method,outcome,status,uri} MetricName=\"http.server.requests.avg\" uri=\"/api/analyze\"', 'Average', 60))"
+                            expression = "AVG(SEARCH('Namespace=\"${local.metrics_namespace}\" MetricName=\"http.server.requests.avg\" uri=\"/api/analyze\"', 'Average', 60))"
               label      = "Snitt responstid"
               id         = "http"
             }]
@@ -118,7 +118,6 @@ resource "aws_cloudwatch_dashboard" "main" {
 
 resource "aws_cloudwatch_metric_alarm" "bedrock_latency" {
   alarm_name          = "wishifai-${var.candidate_number}-bedrock-latency"
-  alarm_description   = "Snittlatens på Bedrock-kallet har vært over ${var.bedrock_latency_threshold_ms} ms i 3 minutter på rad"
   namespace           = local.metrics_namespace
   metric_name         = "wishifai.bedrock.latency.avg"
   statistic           = "Average"
