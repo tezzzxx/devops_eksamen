@@ -38,3 +38,35 @@ jobs:
             -t $REGISTRY/$ECR_REPOSITORY:latest .
           docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $REGISTRY/$ECR_REPOSITORY:latest
+
+          
+  terraform:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    defaults:
+      run:
+        working-directory: infra
+
+    steps:
+      - name: Sjekk ut repo
+        uses: actions/checkout@v4
+
+      - name: Konfigurer AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sett opp Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Sjekk formatering
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
