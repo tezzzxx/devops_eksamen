@@ -10,3 +10,7 @@ output "s3_bucket" {
 output "service_arn" {
   value = aws_ecs_express_gateway_service.app.service_arn
 }
+
+output "dashboard_name" {
+  value = aws_cloudwatch_dashboard.main.dashboard_name
+}

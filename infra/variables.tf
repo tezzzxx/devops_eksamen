@@ -16,3 +16,8 @@ variable "ecr_repository_url" {
 variable "image_tag" {
   type = string
 }
+
+variable "bedrock_latency_threshold_ms" {
+  type    = number
+  default = 15000
+}
