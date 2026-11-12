@@ -1,6 +1,9 @@
 package no.pgr301.exam.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import no.pgr301.exam.model.GiftAnalysis;
 import no.pgr301.exam.model.GiftSuggestion;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +27,20 @@ public class BedrockService {
 
     private final BedrockRuntimeClient client;
     private final String modelId;
+    private final Timer bedrockTimer;
+    private final DistributionSummary suggestionsSummary;
 
     public BedrockService(BedrockRuntimeClient client,
-                          @Value("${app.bedrock.model-id}") String modelId) {
+                          @Value("${app.bedrock.model-id}") String modelId,
+                          MeterRegistry registry) {
         this.client = client;
         this.modelId = modelId;
+        this.bedrockTimer = Timer.builder("wishifai.bedrock.latency")
+                .description("Tid brukt på Bedrock Converse-kallet")
+                .register(registry);
+        this.suggestionsSummary = DistributionSummary.builder("wishifai.suggestions.count")
+                .description("Antall gaveforslag per analyse")
+                .register(registry);
     }
 
     /**
@@ -86,16 +98,18 @@ public class BedrockService {
                 }
                 """.formatted(String.join(", ", labels));
 
-        ConverseResponse resp = client.converse(ConverseRequest.builder()
+        ConverseResponse resp = bedrockTimer.record(() -> client.converse(ConverseRequest.builder()
                 .modelId(modelId)
                 .messages(Message.builder()
                         .role(ConversationRole.USER)
                         .content(ContentBlock.fromText(prompt))
                         .build())
-                .build());
+                .build()));
 
         String text = resp.output().message().content().get(0).text();
-        return parseAnalysis(text);
+        GiftAnalysis analysis = parseAnalysis(text);
+        suggestionsSummary.record(analysis.suggestions() == null ? 0 : analysis.suggestions().size());
+        return analysis;
     }
 
     private GiftAnalysis parseAnalysis(String text) {
