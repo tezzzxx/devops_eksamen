@@ -105,7 +105,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           period = 60
           metrics = [
             [{
-                            expression = "AVG(SEARCH('Namespace=\"${local.metrics_namespace}\" MetricName=\"http.server.requests.avg\" uri=\"/api/analyze\"', 'Average', 60))"
+              expression = "AVG(SEARCH('Namespace=\"${local.metrics_namespace}\" MetricName=\"http.server.requests.avg\" uri=\"/api/analyze\"', 'Average', 60))"
               label      = "Snitt responstid"
               id         = "http"
             }]
