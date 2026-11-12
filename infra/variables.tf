@@ -19,5 +19,5 @@ variable "image_tag" {
 
 variable "bedrock_latency_threshold_ms" {
   type    = number
-  default = 15000
+  default = 30000
 }
